@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Visualization & Algorithms</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <h2>Graph Controls</h2>
+            <div class="controls">
+                <button id="addNode">Add Node</button>
+                <button id="addEdge">Add Edge</button>
+                <button id="clear">Clear Graph</button>
+            </div>
+            <h2>Random Graph</h2>
+            <div class="random-graph">
+                <div class="input-group">
+                    <label for="nodeCount">Number of Nodes:</label>
+                    <input type="number" id="nodeCount" min="1" max="50" value="10">
+                </div>
+                <div class="input-group">
+                    <label for="edgeProbability">Edge Probability:</label>
+                    <input type="range" id="edgeProbability" min="0" max="100" value="30">
+                    <span id="probabilityValue">30%</span>
+                </div>
+                <button id="generateRandom">Random Graph</button>
+            </div>
+            <h2>Algorithms</h2>
+            <div class="algorithms">
+                <div class="input-group">
+                    <label for="startNode">Start Node:</label>
+                    <select id="startNode">
+                        <option value="">Select a node</option>
+                    </select>
+                </div>
+                <button id="dfs">Depth First Search</button>
+                <button id="bfs">Breadth First Search</button>
+                <button id="dijkstra">Dijkstra's Algorithm</button>
+                <button id="resetAnimation" class="reset-button">Reset Animation</button>
+            </div>
+            <div class="algorithm-status">
+                <p id="status">Ready</p>
+            </div>
+        </div>
+        <div class="main-content">
+            <div id="graph-container">
+                <!-- Graph will be rendered here -->
+                <div class="zoom-controls">
+                    <button class="zoom-button" id="zoomIn">+</button>
+                    <button class="zoom-button" id="zoomOut">-</button>
+                    <button class="zoom-button" id="resetZoom">↺</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html> 
