@@ -209,6 +209,12 @@ button:disabled {
     filter: drop-shadow(0 0 3px rgba(149, 165, 166, 0.3));
 }
 
+.edge.visited {
+    stroke: #f1c40f;
+    stroke-width: 2;
+    filter: drop-shadow(0 0 5px rgba(241, 196, 15, 0.5));
+}
+
 .edge.active {
     stroke: #e74c3c;
     stroke-width: 3;

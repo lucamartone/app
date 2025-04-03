@@ -2,6 +2,7 @@
 let nodes = [];
 let edges = [];
 let nodeCounter = 0;
+let visitedEdges = new Set(); // Add tracking for visited edges
 
 // D3.js setup
 const width = window.innerWidth - 300;
@@ -91,13 +92,8 @@ function addNode() {
         // Update the visualization
         updateGraph();
         
-        // Remove the click handler
-        container.removeEventListener('click', clickHandler);
-        document.getElementById('status').textContent = 'Node added successfully';
-        
-        // Reset the button state
-        document.getElementById('addNode').classed('active', false);
-        container.style.cursor = 'default';
+        // Remove the click handler and reset UI
+        cleanupNodeAddition();
     };
     
     // Add click event listener
@@ -106,6 +102,24 @@ function addNode() {
     // Add visual feedback
     container.style.cursor = 'crosshair';
     document.getElementById('addNode').classed('active', true);
+    
+    // Add escape key handler to cancel node addition
+    const escapeHandler = function(event) {
+        if (event.key === 'Escape') {
+            cleanupNodeAddition();
+        }
+    };
+    
+    document.addEventListener('keydown', escapeHandler);
+    
+    // Cleanup function
+    function cleanupNodeAddition() {
+        container.removeEventListener('click', clickHandler);
+        document.removeEventListener('keydown', escapeHandler);
+        container.style.cursor = 'default';
+        document.getElementById('addNode').classed('active', false);
+        document.getElementById('status').textContent = 'Node addition cancelled';
+    }
 }
 
 // Edge creation
@@ -123,6 +137,11 @@ function startEdgeCreation() {
     
     // Reset all nodes
     g.selectAll('.node').classed('active', false);
+    
+    // Get container dimensions and transform
+    const container = document.getElementById('graph-container');
+    const containerRect = container.getBoundingClientRect();
+    const transform = d3.zoomTransform(svg.node());
     
     // Add click handlers to nodes
     g.selectAll('.node')
@@ -150,24 +169,28 @@ function startEdgeCreation() {
                         target: d.id,
                         weight: 1
                     });
+                    
+                    // Update the visualization
                     updateGraph();
+                    
+                    // Clean up
+                    if (tempEdge) {
+                        tempEdge.remove();
+                        tempEdge = null;
+                    }
+                    sourceNode = null;
+                    g.selectAll('.node').classed('active', false);
+                    g.selectAll('.node').style('cursor', 'default');
+                    document.getElementById('status').textContent = 'Edge added successfully';
+                } else {
+                    document.getElementById('status').textContent = 'Cannot connect a node to itself';
                 }
-                
-                // Clean up
-                if (tempEdge) {
-                    tempEdge.remove();
-                    tempEdge = null;
-                }
-                sourceNode = null;
-                document.getElementById('status').textContent = 'Edge added successfully';
-                g.selectAll('.node').style('cursor', 'default');
             }
         });
     
     // Add mouse move handler for temporary edge
     g.on('mousemove', function(event) {
         if (sourceNode && tempEdge) {
-            const transform = d3.zoomTransform(svg.node());
             const x = (event.clientX - containerRect.left - transform.x) / transform.k;
             const y = (event.clientY - containerRect.top - transform.y) / transform.k;
             
@@ -273,7 +296,7 @@ function updateGraph() {
         .enter()
         .append('line')
         .attr('class', 'edge')
-        .attr('id', d => `${d.source.id}-${d.target.id}`);
+        .attr('id', d => `${d.source}-${d.target}`);
 
     // Create nodes
     const node = g.selectAll('.node')
@@ -296,6 +319,10 @@ function updateGraph() {
         .text(d => d.label);
 
     // Update positions
+    simulation.nodes(nodes);
+    simulation.force('link').links(edges);
+    simulation.alpha(0.3).restart();
+
     simulation.on('tick', () => {
         edge
             .attr('x1', d => d.source.x)
@@ -334,6 +361,10 @@ function resetAnimation() {
     // Reset all node and edge styles
     svg.selectAll('.node').classed('active', false);
     svg.selectAll('.edge').classed('active', false);
+    svg.selectAll('.edge').classed('visited', false);
+    
+    // Reset visited edges set
+    visitedEdges.clear();
     
     // Reset status message
     document.getElementById('status').textContent = 'Animation reset';
@@ -368,9 +399,8 @@ async function runAlgorithm(type) {
     document.getElementById('bfs').disabled = true;
     document.getElementById('dijkstra').disabled = true;
 
-    // Reset graph styling
-    svg.selectAll('.node').classed('active', false);
-    svg.selectAll('.edge').classed('active', false);
+    // Reset graph styling and visited edges
+    resetAnimation();
 
     const visited = new Set();
     const stack = [startNode];
@@ -384,25 +414,31 @@ async function runAlgorithm(type) {
         
         // Find connected edges
         const connectedEdges = edges.filter(e => 
-            e.source.id === current.id || e.target.id === current.id
+            e.source === current.id || e.target === current.id
         );
 
         // Animate connected edges
         for (const edge of connectedEdges) {
-            const edgeId = `${edge.source.id}-${edge.target.id}`;
+            const edgeId = `${edge.source}-${edge.target}`;
             const edgeElement = d3.select(`#${edgeId}`);
             
-            // Animate the edge with a gradient effect
-            edgeElement
-                .classed('active', true)
-                .style('stroke-dasharray', '5,5')
-                .style('stroke-dashoffset', 10)
-                .transition()
-                .duration(1000)
-                .style('stroke-dashoffset', 0)
-                .transition()
-                .duration(500)
-                .style('stroke-dasharray', 'none');
+            // Check if edge has been visited
+            if (!visitedEdges.has(edgeId)) {
+                visitedEdges.add(edgeId);
+                edgeElement.classed('visited', true);
+                
+                // Animate the edge with a gradient effect
+                edgeElement
+                    .classed('active', true)
+                    .style('stroke-dasharray', '5,5')
+                    .style('stroke-dashoffset', 10)
+                    .transition()
+                    .duration(1000)
+                    .style('stroke-dashoffset', 0)
+                    .transition()
+                    .duration(500)
+                    .style('stroke-dasharray', 'none');
+            }
         }
 
         // Find neighbors
@@ -428,8 +464,8 @@ async function runAlgorithm(type) {
 
 function getNeighbors(node) {
     return edges
-        .filter(e => e.source.id === node.id || e.target.id === node.id)
-        .map(e => e.source.id === node.id ? e.target : e.source);
+        .filter(e => e.source === node.id || e.target === node.id)
+        .map(e => e.source === node.id ? e.target : e.source);
 }
 
 // Random Graph Generation
