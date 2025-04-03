@@ -17,6 +17,13 @@ const zoom = d3.zoom()
     .scaleExtent([0.1, 4]) // Min and max zoom scale
     .on('zoom', (event) => {
         g.attr('transform', event.transform);
+    })
+    .filter((event) => {
+        // Prevent zoom on double tap
+        if (event.type === 'dblclick') return false;
+        // Allow zoom on pinch
+        if (event.type === 'wheel') return !event.ctrlKey && !event.button;
+        return true;
     });
 
 // Create a group element for zooming
@@ -638,4 +645,123 @@ function edgeRepulsion() {
             }
         }
     }
-} 
+}
+
+// Add touch interaction handling
+function setupTouchInteractions() {
+    const container = document.getElementById('graph-container');
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let isDragging = false;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+            isDragging = true;
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        
+        const touch = e.touches[0];
+        const dx = touch.clientX - touchStartX;
+        const dy = touch.clientY - touchStartY;
+        
+        // Update transform
+        const transform = d3.zoomTransform(svg.node());
+        svg.call(zoom.transform, d3.zoomIdentity
+            .translate(transform.x + dx, transform.y + dy)
+            .scale(transform.k)
+        );
+        
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
+    }, { passive: true });
+
+    container.addEventListener('touchend', () => {
+        isDragging = false;
+    }, { passive: true });
+
+    // Handle pinch zoom
+    let initialDistance = 0;
+    let initialScale = 1;
+
+    container.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialDistance = Math.sqrt(dx * dx + dy * dy);
+            initialScale = d3.zoomTransform(svg.node()).k;
+        }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+        if (e.touches.length !== 2) return;
+        
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const currentDistance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (initialDistance > 0) {
+            const scale = initialScale * (currentDistance / initialDistance);
+            const transform = d3.zoomTransform(svg.node());
+            svg.call(zoom.transform, d3.zoomIdentity
+                .translate(transform.x, transform.y)
+                .scale(Math.min(Math.max(scale, 0.1), 4))
+            );
+        }
+    }, { passive: true });
+}
+
+// Initialize touch interactions
+setupTouchInteractions();
+
+// Modify zoom behavior for mobile
+zoom = d3.zoom()
+    .scaleExtent([0.1, 4])
+    .on('zoom', (event) => {
+        g.attr('transform', event.transform);
+    })
+    .filter((event) => {
+        // Prevent zoom on double tap
+        if (event.type === 'dblclick') return false;
+        // Allow zoom on pinch
+        if (event.type === 'wheel') return !event.ctrlKey && !event.button;
+        return true;
+    });
+
+// Update node drag behavior for mobile
+function dragStarted(event) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    event.subject.fx = event.subject.x;
+    event.subject.fy = event.subject.y;
+}
+
+function dragged(event) {
+    event.subject.fx = event.x;
+    event.subject.fy = event.y;
+}
+
+function dragEnded(event) {
+    if (!event.active) simulation.alphaTarget(0);
+    event.subject.fx = null;
+    event.subject.fy = null;
+}
+
+// Add mobile-specific event listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // Handle mobile orientation changes
+    window.addEventListener('orientationchange', () => {
+        setTimeout(() => {
+            centerView();
+        }, 100);
+    });
+
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        updateGraph();
+        centerView();
+    });
+}); 

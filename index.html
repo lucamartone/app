@@ -2,60 +2,55 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Visualization & Algorithms</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Graph Visualizer</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="sidebar">
-            <h1>funziona?</h1>
-            <h2>Graph Controls</h2>
-            <div class="controls">
-                <button id="addNode">Add Node</button>
-                <button id="addEdge">Add Edge</button>
-                <button id="clear">Clear Graph</button>
+        <div class="controls">
+            <div class="control-group">
+                <button id="addNode" class="control-button">Aggiungi Nodo</button>
+                <button id="addEdge" class="control-button">Aggiungi Arco</button>
+                <button id="clear" class="control-button">Pulisci</button>
+                <button id="generateRandom" class="control-button">Genera Casuale</button>
             </div>
-            <h2>Random Graph</h2>
-            <div class="random-graph">
-                <div class="input-group">
-                    <label for="nodeCount">Number of Nodes:</label>
-                    <input type="number" id="nodeCount" min="1" max="50" value="10">
+            <div class="control-group">
+                <select id="startNode" class="control-select">
+                    <option value="">Seleziona nodo di partenza</option>
+                </select>
+                <div class="algorithm-controls">
+                    <button id="dfs" class="control-button">DFS</button>
+                    <button id="bfs" class="control-button">BFS</button>
+                    <button id="dijkstra" class="control-button">Dijkstra</button>
                 </div>
-                <div class="input-group">
-                    <label for="edgeProbability">Edge Probability:</label>
-                    <input type="range" id="edgeProbability" min="0" max="100" value="30">
+            </div>
+            <div class="control-group">
+                <div class="random-controls">
+                    <label for="nodeCount">Numero di nodi:</label>
+                    <input type="number" id="nodeCount" min="1" max="20" value="5" class="control-input">
+                    <label for="edgeProbability">Probabilità archi:</label>
+                    <input type="range" id="edgeProbability" min="0" max="100" value="30" class="control-range">
                     <span id="probabilityValue">30%</span>
                 </div>
-                <button id="generateRandom">Random Graph</button>
-            </div>
-            <h2>Algorithms</h2>
-            <div class="algorithms">
-                <div class="input-group">
-                    <label for="startNode">Start Node:</label>
-                    <select id="startNode">
-                        <option value="">Select a node</option>
-                    </select>
-                </div>
-                <button id="dfs">Depth First Search</button>
-                <button id="bfs">Breadth First Search</button>
-                <button id="dijkstra">Dijkstra's Algorithm</button>
-                <button id="resetAnimation" class="reset-button">Reset Animation</button>
-            </div>
-            <div class="algorithm-status">
-                <p id="status">Ready</p>
             </div>
         </div>
-        <div class="main-content">
-            <div id="graph-container">
-                <!-- Graph will be rendered here -->
-                <div class="zoom-controls">
-                    <button class="zoom-button" id="zoomIn">+</button>
-                    <button class="zoom-button" id="zoomOut">-</button>
-                    <button class="zoom-button" id="resetZoom">↺</button>
-                </div>
+        <div id="graph-container"></div>
+        <div class="zoom-controls">
+            <button id="zoomIn" class="zoom-button">+</button>
+            <button id="zoomOut" class="zoom-button">-</button>
+            <button id="resetZoom" class="zoom-button">↺</button>
+            <button id="centerView" class="zoom-button">◎</button>
+        </div>
+        <div class="log-panel">
+            <div class="log-header">
+                <h3>Log Operazioni</h3>
+                <button id="clearLog" class="control-button">Pulisci Log</button>
             </div>
+            <div class="log-content"></div>
         </div>
     </div>
     <script src="script.js"></script>
