@@ -216,7 +216,7 @@ button:disabled {
 }
 
 .edge.active {
-    stroke: #e74c3c;
+    stroke: #f1c40f;
     stroke-width: 3;
     filter: drop-shadow(0 0 8px rgba(231, 76, 60, 0.5));
     animation: pulseEdge 1.5s ease-in-out;

@@ -27,11 +27,18 @@ svg.call(zoom);
 
 // Force simulation
 const simulation = d3.forceSimulation()
-    .force('link', d3.forceLink().id(d => d.id).distance(150))
-    .force('charge', d3.forceManyBody().strength(-500))
+    .force('link', d3.forceLink().id(d => d.id)
+        .distance(300) // Aumenta ulteriormente la distanza tra i nodi
+        .strength(0.3)) // Riduce ulteriormente la forza degli archi
+    .force('charge', d3.forceManyBody()
+        .strength(-1500) // Aumenta significativamente la forza repulsiva
+        .distanceMax(500)) // Aumenta la distanza massima di repulsione
     .force('center', d3.forceCenter(width / 2, height / 2))
-    .force('collision', d3.forceCollide().radius(50))
-    .force('bounds', forceBounds());
+    .force('collision', d3.forceCollide()
+        .radius(100) // Aumenta ulteriormente il raggio di collisione
+        .strength(1)) // Massima forza di collisione
+    .force('x', d3.forceX(width / 2).strength(0.05))
+    .force('y', d3.forceY(height / 2).strength(0.05));
 
 // Event listeners
 document.getElementById('addNode').addEventListener('click', addNode);
@@ -163,10 +170,10 @@ function startEdgeCreation() {
             } else {
                 // Select target node
                 if (sourceNode !== d) {
-                    // Add the edge
+                    // Add the edge with the correct structure
                     edges.push({
-                        source: sourceNode.id,
-                        target: d.id,
+                        source: sourceNode,
+                        target: d,
                         weight: 1
                     });
                     
@@ -278,25 +285,13 @@ function updateGraph() {
     g.selectAll('.edge').remove();
     g.selectAll('.node').remove();
 
-    // Add boundary rectangle
-    const container = document.getElementById('graph-container');
-    const containerRect = container.getBoundingClientRect();
-    
-    g.append('rect')
-        .attr('width', containerRect.width)
-        .attr('height', containerRect.height)
-        .attr('fill', 'none')
-        .attr('stroke', 'rgba(52, 152, 219, 0.1)')
-        .attr('stroke-width', 2)
-        .attr('stroke-dasharray', '5,5');
-
     // Create edges
     const edge = g.selectAll('.edge')
         .data(edges)
         .enter()
         .append('line')
         .attr('class', 'edge')
-        .attr('id', d => `${d.source}-${d.target}`);
+        .attr('id', d => `${d.source.id}-${d.target.id}`);
 
     // Create nodes
     const node = g.selectAll('.node')
@@ -318,12 +313,14 @@ function updateGraph() {
         .attr('text-anchor', 'middle')
         .text(d => d.label);
 
-    // Update positions
+    // Update simulation
     simulation.nodes(nodes);
     simulation.force('link').links(edges);
-    simulation.alpha(0.3).restart();
 
+    // Add edge repulsion during simulation
     simulation.on('tick', () => {
+        edgeRepulsion();
+        
         edge
             .attr('x1', d => d.source.x)
             .attr('y1', d => d.source.y)
@@ -333,6 +330,12 @@ function updateGraph() {
         node
             .attr('transform', d => `translate(${d.x},${d.y})`);
     });
+
+    // Increase stabilization time
+    setTimeout(() => {
+        simulation.alpha(1).restart();
+        simulation.alphaDecay(0.01);
+    }, 100);
 
     // Update start node select
     updateStartNodeSelect();
@@ -557,12 +560,13 @@ function generateRandomGraph() {
     for (let i = 0; i < nodeCount; i++) {
         const angle = (i / nodeCount) * 2 * Math.PI;
         const radius = Math.min(width, height) * 0.3;
-        nodes.push({
+        const node = {
             id: `node-${nodeCounter++}`,
             label: (i + 1).toString(),
             x: width / 2 + radius * Math.cos(angle),
             y: height / 2 + radius * Math.sin(angle)
-        });
+        };
+        nodes.push(node);
     }
 
     // Generate edges based on probability
@@ -570,8 +574,8 @@ function generateRandomGraph() {
         for (let j = i + 1; j < nodes.length; j++) {
             if (Math.random() < probability) {
                 edges.push({
-                    source: nodes[i].id,
-                    target: nodes[j].id,
+                    source: nodes[i],
+                    target: nodes[j],
                     weight: Math.floor(Math.random() * 10) + 1
                 });
             }
@@ -590,4 +594,48 @@ function generateRandomGraph() {
     simulation.alpha(0.3).restart();
 
     document.getElementById('status').textContent = `Generated random graph with ${nodeCount} nodes`;
+}
+
+// Funzione per calcolare la repulsione tra gli archi
+function edgeRepulsion() {
+    const k = 100; // Costante di repulsione
+    const edges = simulation.force('link').links();
+    
+    for (let i = 0; i < edges.length; i++) {
+        for (let j = i + 1; j < edges.length; j++) {
+            const e1 = edges[i];
+            const e2 = edges[j];
+            
+            // Calcola il punto medio di ogni arco
+            const mid1 = {
+                x: (e1.source.x + e1.target.x) / 2,
+                y: (e1.source.y + e1.target.y) / 2
+            };
+            const mid2 = {
+                x: (e2.source.x + e2.target.x) / 2,
+                y: (e2.source.y + e2.target.y) / 2
+            };
+            
+            // Calcola la distanza tra i punti medi
+            const dx = mid2.x - mid1.x;
+            const dy = mid2.y - mid1.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance < 50) { // Soglia di repulsione
+                const force = k / (distance * distance);
+                const fx = force * dx / distance;
+                const fy = force * dy / distance;
+                
+                // Applica la forza ai nodi
+                e1.source.vx -= fx;
+                e1.source.vy -= fy;
+                e1.target.vx -= fx;
+                e1.target.vy -= fy;
+                e2.source.vx += fx;
+                e2.source.vy += fy;
+                e2.target.vx += fx;
+                e2.target.vy += fy;
+            }
+        }
+    }
 } 
