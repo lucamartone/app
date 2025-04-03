@@ -402,56 +402,126 @@ async function runAlgorithm(type) {
     // Reset graph styling and visited edges
     resetAnimation();
 
-    const visited = new Set();
-    const stack = [startNode];
-    visited.add(startNode.id);
-
-    while (stack.length > 0) {
-        const current = type === 'dfs' ? stack.pop() : stack.shift();
+    if (type === 'dijkstra') {
+        // Dijkstra's algorithm implementation
+        const distances = new Map();
+        const previous = new Map();
+        const unvisited = new Set(nodes);
         
-        // Highlight current node
-        d3.select(`#${current.id}`).classed('active', true);
-        
-        // Find connected edges
-        const connectedEdges = edges.filter(e => 
-            e.source === current.id || e.target === current.id
-        );
+        // Initialize distances
+        nodes.forEach(node => {
+            distances.set(node, Infinity);
+        });
+        distances.set(startNode, 0);
 
-        // Animate connected edges
-        for (const edge of connectedEdges) {
-            const edgeId = `${edge.source}-${edge.target}`;
-            const edgeElement = d3.select(`#${edgeId}`);
-            
-            // Check if edge has been visited
-            if (!visitedEdges.has(edgeId)) {
-                visitedEdges.add(edgeId);
-                edgeElement.classed('visited', true);
+        while (unvisited.size > 0) {
+            // Find node with minimum distance
+            let current = null;
+            let minDist = Infinity;
+            for (const node of unvisited) {
+                if (distances.get(node) < minDist) {
+                    minDist = distances.get(node);
+                    current = node;
+                }
+            }
+
+            if (current === null) break;
+
+            // Highlight current node
+            d3.select(`#${current.id}`).classed('active', true);
+
+            // Find connected edges
+            const connectedEdges = edges.filter(e => 
+                e.source.id === current.id || e.target.id === current.id
+            );
+
+            // Process neighbors
+            for (const edge of connectedEdges) {
+                const neighbor = edge.source.id === current.id ? edge.target : edge.source;
+                if (!unvisited.has(neighbor)) continue;
+
+                const edgeId = `${edge.source.id}-${edge.target.id}`;
+                const edgeElement = d3.select(`#${edgeId}`);
                 
-                // Animate the edge with a gradient effect
-                edgeElement
-                    .classed('active', true)
-                    .style('stroke-dasharray', '5,5')
-                    .style('stroke-dashoffset', 10)
-                    .transition()
-                    .duration(1000)
-                    .style('stroke-dashoffset', 0)
-                    .transition()
-                    .duration(500)
-                    .style('stroke-dasharray', 'none');
-            }
-        }
+                // Animate edge
+                if (!visitedEdges.has(edgeId)) {
+                    visitedEdges.add(edgeId);
+                    edgeElement.classed('visited', true);
+                    edgeElement
+                        .classed('active', true)
+                        .style('stroke-dasharray', '5,5')
+                        .style('stroke-dashoffset', 10)
+                        .transition()
+                        .duration(1000)
+                        .style('stroke-dashoffset', 0)
+                        .transition()
+                        .duration(500)
+                        .style('stroke-dasharray', 'none');
+                }
 
-        // Find neighbors
-        const neighbors = getNeighbors(current);
-        for (const neighbor of neighbors) {
-            if (!visited.has(neighbor.id)) {
-                visited.add(neighbor.id);
-                stack.push(neighbor);
+                const newDist = distances.get(current) + (edge.weight || 1);
+                if (newDist < distances.get(neighbor)) {
+                    distances.set(neighbor, newDist);
+                    previous.set(neighbor, current);
+                }
             }
-        }
 
-        // Wait for animation
-        await new Promise(resolve => setTimeout(resolve, 1000));
+            unvisited.delete(current);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+    } else {
+        // DFS and BFS implementation
+        const visited = new Set();
+        const stack = [startNode];
+        visited.add(startNode.id);
+
+        while (stack.length > 0) {
+            const current = type === 'dfs' ? stack.pop() : stack.shift();
+            
+            // Highlight current node
+            d3.select(`#${current.id}`).classed('active', true);
+            
+            // Find connected edges
+            const connectedEdges = edges.filter(e => 
+                e.source.id === current.id || e.target.id === current.id
+            );
+
+            // Animate connected edges
+            for (const edge of connectedEdges) {
+                const edgeId = `${edge.source.id}-${edge.target.id}`;
+                const edgeElement = d3.select(`#${edgeId}`);
+                
+                // Check if edge has been visited
+                if (!visitedEdges.has(edgeId)) {
+                    visitedEdges.add(edgeId);
+                    edgeElement.classed('visited', true);
+                    
+                    // Animate the edge with a gradient effect
+                    edgeElement
+                        .classed('active', true)
+                        .style('stroke-dasharray', '5,5')
+                        .style('stroke-dashoffset', 10)
+                        .transition()
+                        .duration(1000)
+                        .style('stroke-dashoffset', 0)
+                        .transition()
+                        .duration(500)
+                        .style('stroke-dasharray', 'none');
+                }
+            }
+
+            // Find neighbors
+            const neighbors = getNeighbors(current);
+            for (const neighbor of neighbors) {
+                if (!visited.has(neighbor.id)) {
+                    visited.add(neighbor.id);
+                    stack.push(neighbor);
+                }
+            }
+
+            // Wait for animation
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
     }
 
     document.getElementById('status').textContent = `${type.toUpperCase()} completed`;
@@ -464,8 +534,8 @@ async function runAlgorithm(type) {
 
 function getNeighbors(node) {
     return edges
-        .filter(e => e.source === node.id || e.target === node.id)
-        .map(e => e.source === node.id ? e.target : e.source);
+        .filter(e => e.source.id === node.id || e.target.id === node.id)
+        .map(e => e.source.id === node.id ? e.target : e.source);
 }
 
 // Random Graph Generation
