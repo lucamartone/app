@@ -3,61 +3,120 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Visualization & Algorithms</title>
+    <title>GraphFlow</title>
+    <!-- Google Fonts - VT323 -->
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="https://d3js.org/d3.v7.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <h1>funziona?</h1>
-            <h2>Graph Controls</h2>
-            <div class="controls">
-                <button id="addNode">Add Node</button>
-                <button id="addEdge">Add Edge</button>
-                <button id="clear">Clear Graph</button>
-            </div>
-            <h2>Random Graph</h2>
-            <div class="random-graph">
-                <div class="input-group">
-                    <label for="nodeCount">Number of Nodes:</label>
-                    <input type="number" id="nodeCount" min="1" max="50" value="10">
+    <div class="container-fluid h-100">
+        <div class="row h-100 g-0">
+            <!-- Sidebar -->
+            <div class="col-md-3 col-lg-2 sidebar">
+                <div class="sidebar-header">
+                    <h1>Graph<span class="highlight">Flow</span></h1>
+                    <div class="status-indicator"></div>
                 </div>
-                <div class="input-group">
-                    <label for="edgeProbability">Edge Probability:</label>
-                    <input type="range" id="edgeProbability" min="0" max="100" value="30">
-                    <span id="probabilityValue">30%</span>
+                
+                <!-- Graph Controls -->
+                <div class="mb-4">
+                    <h2>Graph Controls</h2>
+                    <div class="controls d-grid gap-2">
+                        <button id="addNode" class="glow-button">
+                            <span class="button-icon">+</span>
+                            Add Node
+                        </button>
+                        <button id="addEdge" class="glow-button">
+                            <span class="button-icon">↔</span>
+                            Add Edge
+                        </button>
+                        <button id="clear" class="glow-button danger">
+                            <span class="button-icon">×</span>
+                            Clear Graph
+                        </button>
+                    </div>
                 </div>
-                <button id="generateRandom">Random Graph</button>
-            </div>
-            <h2>Algorithms</h2>
-            <div class="algorithms">
-                <div class="input-group">
-                    <label for="startNode">Start Node:</label>
-                    <select id="startNode">
-                        <option value="">Select a node</option>
-                    </select>
+
+                <!-- Random Graph -->
+                <div class="mb-4">
+                    <h2>Random Graph</h2>
+                    <div class="random-graph">
+                        <div class="input-group mb-3">
+                            <label for="nodeCount">Number of Nodes:</label>
+                            <input type="number" id="nodeCount" min="1" max="50" value="10">
+                        </div>
+                        <div class="input-group mb-3">
+                            <label for="edgeProbability">Edge Probability:</label>
+                            <input type="range" id="edgeProbability" min="0" max="100" value="30">
+                            <span id="probabilityValue">30%</span>
+                        </div>
+                        <button id="generateRandom" class="glow-button">
+                            <span class="button-icon">⟳</span>
+                            Generate Random
+                        </button>
+                    </div>
                 </div>
-                <button id="dfs">Depth First Search</button>
-                <button id="bfs">Breadth First Search</button>
-                <button id="dijkstra">Dijkstra's Algorithm</button>
-                <button id="resetAnimation" class="reset-button">Reset Animation</button>
+
+                <!-- Algorithms -->
+                <div class="mb-4">
+                    <h2>Algorithms</h2>
+                    <div class="algorithms">
+                        <div class="input-group mb-3">
+                            <label for="startNode">Start Node:</label>
+                            <select id="startNode">
+                                <option value="">Select a node</option>
+                            </select>
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button id="dfs" class="glow-button">
+                                <span class="button-icon">↓</span>
+                                Depth First Search
+                            </button>
+                            <button id="bfs" class="glow-button">
+                                <span class="button-icon">→</span>
+                                Breadth First Search
+                            </button>
+                            <button id="dijkstra" class="glow-button">
+                                <span class="button-icon">⚡</span>
+                                Dijkstra's Algorithm
+                            </button>
+                            <button id="resetAnimation" class="glow-button warning">
+                                <span class="button-icon">↺</span>
+                                Reset Animation
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="algorithm-status">
+                    <p id="status">Ready</p>
+                </div>
             </div>
-            <div class="algorithm-status">
-                <p id="status">Ready</p>
-            </div>
-        </div>
-        <div class="main-content">
-            <div id="graph-container">
-                <!-- Graph will be rendered here -->
-                <div class="zoom-controls">
-                    <button class="zoom-button" id="zoomIn">+</button>
-                    <button class="zoom-button" id="zoomOut">-</button>
-                    <button class="zoom-button" id="resetZoom">↺</button>
+
+            <!-- Main Content -->
+            <div class="col-md-9 col-lg-10 main-content">
+                <div class="position-relative h-100">
+                    <div id="graph-container">
+                        <!-- Graph will be rendered here -->
+                    </div>
+                    <div class="zoom-controls">
+                        <div class="btn-group">
+                            <button class="zoom-button" id="zoomIn">+</button>
+                            <button class="zoom-button" id="zoomOut">-</button>
+                            <button class="zoom-button" id="resetZoom">↺</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Bootstrap JS Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html> 
