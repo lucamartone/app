@@ -272,7 +272,7 @@ h2 {
 }
 
 .edge.temp-edge {
-    stroke: rgb(46, 69, 46); /*var(--primary-color);*/
+    stroke: rgb(255, 255, 255); /*var(--primary-color);*/
     stroke-width: 2;
     stroke-dasharray: 5,5;
     pointer-events: none;
